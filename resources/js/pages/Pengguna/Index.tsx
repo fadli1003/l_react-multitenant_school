@@ -170,7 +170,7 @@ export default function Index(
                     </table>
                 </div>
                 <Dialog open={open} onOpenChange={setOpen}>
-                    <DialogContent className="absolute flex h-full w-full items-center justify-center backdrop-blur-[2px]" >
+                    <DialogContent aria-describedby={undefined} className="absolute flex h-full w-full items-center justify-center backdrop-blur-[2px]" >
                         <div className="max-[768px] w-[400px] min-w-[300px] translate-y-[-50px] rounded-md border bg-background py-6 px-8">
                             <DialogHeader>
                                 <DialogTitle className="text-center font-semibold">

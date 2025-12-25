@@ -193,7 +193,7 @@ export default function Index() {
                 </div>
             </Card>
             <Dialog open={open} onOpenChange={setOpen}>
-                <DialogContent>
+                <DialogContent aria-describedby={undefined}>
                     <DialogHeader>
                         <DialogTitle className='text-center'>
                             {isEdit ? 'Update Enrollment' : isAdd ? 'Add Enrollment' : 'Enrollment Information'}
@@ -208,9 +208,9 @@ export default function Index() {
                                 value={form.data.tenant_id}
                                 onChange={(e) => form.setData('tenant_id', Number(e.target.value))}
                                 disabled={isShow}
-                                className='disabled:text-muted-foreground'
+                                className='disabled:text-muted-foreground text-sm py-1.5 px-2 border rounded-sm dark:bg-background'
                             >
-                                {!isEdit && <option value=''>Choose School</option>}
+                                {!isEdit && <option value=''>--Choose School--</option>}
                                 {tenants?.map((t, i) => (
                                     <option key={i} value={t.id}>{t.school_name}</option>
                                 ))}
@@ -225,9 +225,9 @@ export default function Index() {
                                 value={form.data.student_id}
                                 onChange={(e) => form.setData('student_id', Number(e.target.value))}
                                 disabled={isShow}
-                                className='disabled:text-muted-foreground'
+                                className='disabled:text-muted-foreground text-sm border py-1.5 px-2 rounded-md'
                             >
-                                {!isEdit && <option value=''>Choose Student Name</option>}
+                                {!isEdit && <option value=''>--Choose Student Name--</option>}
                                 {students?.map((student, i) => (
                                     <option key={i} value={student.id}>{student.nama_lengkap}</option>
                                 ))}
@@ -242,9 +242,9 @@ export default function Index() {
                                 value={form.data.course_id}
                                 onChange={(e) => form.setData('course_id', Number(e.target.value))}
                                 disabled={isShow}
-                                className='disabled:text-muted-foreground'
+                                className='disabled:text-muted-foreground text-sm py-1.5 px-2 border rounded-md '
                             >
-                                {!isEdit && <option value=''>Choose Course Name</option>}
+                                {!isEdit && <option value=''>--Choose Course Name--</option>}
                                 {courses?.map((course, i) => (
                                     <option key={i} value={course.id}>{course.course_name}</option>
                                 ))}

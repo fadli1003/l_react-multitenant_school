@@ -208,7 +208,7 @@ export default function Index() {
                 </div>
             </Card>
             <Dialog open={open} onOpenChange={setOpen}>
-                <DialogContent>
+                <DialogContent aria-describedby={undefined}>
                     <DialogHeader>
                         <DialogTitle>
                             {isEdit ? 'Update Teacher' : 'Add Teacher'}

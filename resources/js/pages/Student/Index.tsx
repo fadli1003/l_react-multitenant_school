@@ -178,7 +178,7 @@ export default function Index() {
                 </div>
             </Card>
             <Dialog open={open} onOpenChange={setOpen}>
-                <DialogContent className="fixed inset-0 flex h-full w-full items-center justify-center backdrop-blur-[2px]">
+                <DialogContent aria-describedby={undefined} className="fixed inset-0 flex h-full w-full items-center justify-center backdrop-blur-[2px]">
                     <div className="w-[clamp(300px,400px,100%)] rounded-md border bg-background px-8 py-6">
                         <DialogHeader className="mb-5">
                             <DialogTitle className="text-center text-lg font-semibold">

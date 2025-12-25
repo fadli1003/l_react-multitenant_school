@@ -82,6 +82,7 @@ class EnrollmentController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        Enrollment::findOrFail($id)->delete();
+        return session()->flash('success', 'Enrollment data deleted successfully.');
     }
 }
