@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Teacher;
 use App\Models\Tenant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
 
 class TeacherController extends Controller
@@ -21,7 +22,7 @@ class TeacherController extends Controller
     public function create()
     {
         return inertia('Teacher/Create', [
-            'tenants' => Tenant::get(['id', 'scool_name']),
+            'tenants' => Tenant::get(['id', 'school_name']),
         ]);
     }
 
@@ -39,6 +40,9 @@ class TeacherController extends Controller
         $guru->subject = $request->subject;
         $guru->tenant_id = $request->tenant_id;
         $guru->save();
+
+        $validator = Validator::make($request);
+        if ($request->validated())
 
         return redirect()->route('teacher.index')->with('sukses', 'Teacher added succesfully.');
     }

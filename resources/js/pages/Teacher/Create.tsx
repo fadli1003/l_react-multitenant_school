@@ -3,6 +3,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, useForm} from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -17,62 +18,72 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function Create() {
 
-    const {data, setData,errors, post} = useForm({
+    const {data, setData,errors, post, processing, reset} = useForm({
         id: '',
-        nama: '',
-        email: '',
-        pw: '',
+        nama_lengkap: '',
+        panggilan: '',
+        subject: '',
     });
     function submit(e: React.FormEvent){
         e.preventDefault();
-        post(route('teacher.store'));
+        post(route('teacher.store'), {
+            onSuccess: () => reset()
+        });
     }
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Buat Pengguna" />
+            <Head title="Add Teacher" />
                 <div className='py-3 px-5'>
-                    <h2>Tambahkan pengguna</h2>
+                    <h2>Add New Teacher's Data</h2>
                 </div>
                 <div className='p-5'>
                     <form onSubmit={submit}>
-                        <div className='mb-3'>
-                            <label className='pl-1'>Nama</label>
-                            <input
-                              type='text'
-                              id='name'
-                              name='name'
-                              placeholder='Masukkan nama lengkap'
-                              value={data.nama}
-                              onChange={(e) => setData('nama', e.target.value)}
-                              className='w-full py-1.5 px-3 rounded-lg broder-border border-1 ring-0 focus:ring-0 focus:outline-1'
-                            />
-                            {errors.nama && <div className='text-red-500 text-sm mt-1'>{errors.nama}</div>}
+                        <div className='grid md:grid-cols-2 gap-x-5'>
+                            <div className='mb-3 space-y-2 flex flex-col'>
+                                <label className='pl-1'>Full name</label>
+                                <input
+                                  type='text'
+                                  id='nama_lengkap'
+                                  name='nama_lengkap'
+                                  placeholder="Insert Teacher's Full Name"
+                                  value={data.nama_lengkap}
+                                  onChange={(e) => setData('nama_lengkap', e.target.value)}
+                                  className='w-full py-2 px-3 rounded-md broder-border border-1 ring-0 focus:ring-0 focus:outline-1 text-sm'
+                                />
+                                {errors.nama_lengkap && <div className='text-red-500 text-sm mt-1'>{errors.nama_lengkap}</div>}
+                            </div>
+                            <div className='mb-3 flex flex-col space-y-2'>
+                                <label className='pl-1'>Nickname <span className='text-muted-foreground text-sm'>(optional)</span></label>
+                                <input type='text'
+                                id='panggilan'
+                                name='panggilan'
+                                placeholder="Insert Teacher's Nickname"
+                                value={data.panggilan}
+                                onChange={(e) => setData('panggilan', e.target.value)}
+                                className='w-full py-2 px-3 rounded-md broder-border border-1 ring-0 focus:ring-0 focus:outline-1 text-sm'
+                                />
+                                {errors.panggilan && <div className='text-red-500 text-sm mt-1'>{errors.panggilan}</div>}
+                            </div>
+                            <div className='mb-3 flex flex-col space-y-2'>
+                                <label className='pl-1'>Subject</label>
+                                <input type='text' id='subject' name='subject'
+                                placeholder='Insert Teacher Subject'
+                                value={data.subject}
+                                onChange={(e) => setData('subject', e.target.value)}
+                                autoComplete='none'
+                                className='w-full py-2 px-3 rounded-md broder-border border-1 ring-0 focus:ring-0 focus:outline-1 text-sm'
+                                />
+                                {errors.subject && <div className='text-red-500 text-sm mt-0.5'>{errors.subject}</div>}
+                            </div>
                         </div>
-                        <div className='mb-3'>
-                            <label className='pl-1'>Email</label>
-                            <input type='email'
-                              id='email'
-                              name='email'
-                              placeholder='Masukkan Email'
-                              value={data.email}
-                              onChange={(e) => setData('email', e.target.value)}
-                              className='w-full py-1.5 px-3 rounded-lg broder-border border-1 ring-0 focus:ring-0 focus:outline-1'
-                            />
-                            {errors.email && <div className='text-red-500 text-sm mt-1'>{errors.email}</div>}
-                        </div>
-                        <div className='mb-3'>
-                            <label className='pl-1'>Password</label>
-                            <input type='password' id='password' name='password'
-                              placeholder='Masukkan password pengguna'
-                              value={data.pw}
-                              onChange={(e) => setData('pw', e.target.value)}
-                              autoComplete='none'
-                              className='w-full py-1.5 px-3 rounded-lg broder-border border-1 ring-0 focus:ring-0 focus:outline-1'
-                            />
-                            {errors.pw && <div className='text-red-500 text-sm mt-1'>{errors.pw}</div>}
-                        </div>
-                        <Button>Simpan</Button>
+                        <Button className='cursor-pointer'>
+                            {processing ? (
+                                <>
+                                    Saving... <Spinner />
+                                </>
+                                ) : 'Save'}
+                        </Button>
                     </form>
                 </div>
         </AppLayout>

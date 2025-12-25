@@ -1,123 +1,175 @@
-import AppLayout from '@/layouts/app-layout';
-import { useState } from 'react';
-import { route } from 'ziggy-js';
-import { PenBox, Trash2 } from 'lucide-react';
-import { type BreadcrumbItem } from '@/types';
-import { Head, router, usePage } from '@inertiajs/react';
+import ModalKonfirmasi from '@/components/tambahan/confirm-modal';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Spinner } from '@/components/ui/spinner';
+import AppLayout from '@/layouts/app-layout';
+import tenant from '@/routes/tenant';
+import { type BreadcrumbItem } from '@/types';
+import { Head, useForm, usePage } from '@inertiajs/react';
+import { Eye, PenBox, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { route } from 'ziggy-js';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Teacher',
-        href: '/teacher',
+        title: 'Tenant',
+        href: tenant.index().url,
     },
 ];
-interface Teacher {
-        teacher_id: number;
-        tenant_id: number;
-        nama_lengkap: string;
-        panggilan: string;
-        subject: string;
-    }
+interface Tenant {
+    id: number;
+    school_name: string;
+    address: string;
+    school_email: string;
+}
 
-const emptyForm = { nama_lengkap: '', panggilan: '', subject: ''}
+const emptyForm = { school_name: '', address: '', school_email: '' };
 
-type FormState = typeof emptyForm & { id?: number }
+type FormState = typeof emptyForm & { id?: number };
 
 export default function Index() {
-    const { teachers } = usePage<{teachers?: Teacher[]}>().props;
-    const teacherList = teachers ?? [];
+    const { tenants } = usePage<{ tenants?: Tenant[]}>().props;
+    const tenantList = tenants ?? [];
 
     const [open, setOpen] = useState(false);
-    const [form, setForm] = useState<FormState>(emptyForm);
+    const form = useForm<FormState>(emptyForm);
+    const [isAdd, setIsAdd] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
+    const [isShow, setIsShow] = useState(false);
+    const [confirm, setConfirm] = useState(false);
+    const [selectedId, setSelectedId] = useState<number | null>(null);
 
-    const handleOpendAdd = () => {
-        setForm(emptyForm);
+
+    const handleOpenAdd = () => {
+        form.setData(emptyForm);
+        setIsAdd(true);
         setIsEdit(false);
         setOpen(true);
-    }
+    };
 
-    const handleOpenEdit = (teacher : Teacher) => {
-        setForm({
-            id: teacher.teacher_id,
-            nama_lengkap: teacher.nama_lengkap,
-            panggilan: teacher.panggilan,
-            subject: teacher.subject
+    // useEffect (() => {
+    //     if (isOpen && isOpen === true){
+    //         handleOpenAdd()
+    //     }
+    // })
+
+    const handleOpenEdit = (tenant: Tenant) => {
+        form.setData({
+            id: tenant.id,
+            school_name: tenant.school_name,
+            address: tenant.address,
+            school_email: tenant.school_email,
         });
-        setIsEdit(true);
         setOpen(true);
-    }
+        setSelectedId(tenant.id);
+        setIsEdit(true);
+        setIsAdd(false);
+        setIsShow(false);
+    };
+
+    const handleOpenShow = (tenant: Tenant) => {
+        form.setData({
+            id: tenant.id,
+            school_name: tenant.school_name,
+            address: tenant.address,
+            school_email: tenant.school_email,
+        });
+        setOpen(true);
+        setIsShow(true);
+        setSelectedId(tenant.id);
+        setIsAdd(false);
+        setIsEdit(false);
+    };
 
     const handleClose = () => {
         setOpen(false);
-        setForm(emptyForm);
+        form.setData(emptyForm);
         setIsEdit(false);
-    }
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
-    }
+        setSelectedId(null);
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (isEdit && form.id) {
-            router.put(route('pengguna.update', form.id), form, { onSuccess: handleClose });
-        } else {
-            router.post(route('pengguna.store'), form, { onSuccess : handleClose });
+        if (isEdit && selectedId) {
+            form.put(route('tenant.update', selectedId), {
+                onSuccess: handleClose,
+            });
+        } else if(isAdd){
+            form.post(route('tenant.store', form.data), {
+                onSuccess: handleClose
+            });
         }
-    }
+    };
 
     function handelDelete(id: number) {
-        if (confirm('Are you sure want to delete this teacher?')) {
-            router.delete(route('pengguna.destroy', id));
+        setSelectedId(id)
+        setConfirm(true)
+    }
+    function confirmDelete() {
+        if (selectedId) {
+            form.delete(route('tenant.destroy', selectedId))
         }
+        setConfirm(false)
     }
 
-    // const {errors} = useForm({
-    //         id: '',
-    //         nama: teachers.nama_lengkap||'',
-    //         email: teachers.panggilan||'',
-    //         pw: '',
-    // });
-    // const {props} = usePage();
-    // const {sukses} = props as {sukses?: string};
-
     return (
-        <AppLayout breadcrumbs={breadcrumbs} >
-            <Card className='p-6 mt-6'>
-                <div className='flex items-center justify-between mb-4'>
-                    <Head title="Teacher" />
-                    <Button onClick={handleOpendAdd} className='cursor-pointer'>Add Teacher</Button>
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title="Tenant" />
+            <Card className="mt-6 p-6">
+                <div className="mb-4 flex items-center justify-between">
+                    <Button onClick={handleOpenAdd} className="cursor-pointer">
+                        Add Tenant
+                    </Button>
                 </div>
                 <div className="overflow-x-auto rounded-md">
-                    <table className='tabel'>
-                        <thead className='uppercase'>
+                    <table className="tabel">
+                        <thead className="uppercase">
                             <tr>
                                 <th>id</th>
-                                <th>nama lengkap</th>
-                                <th>panggilan</th>
-                                <th>subject</th>
-                                <th>sekolah</th>
+                                <th>school name</th>
+                                <th>address</th>
+                                <th>school_email</th>
                                 <th>aksi</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {teacherList.map((teacher) => (
-                                <tr key={teacher.teacher_id} className='border-b last:border-0 hover:bg-gray-50 dark:hover:bg-neutral-700'>
-                                    <td>{teacher.teacher_id}</td>
-                                    <td>{teacher.nama_lengkap}</td>
-                                    <td>{teacher.panggilan}</td>
-                                    <td>{teacher.subject}</td>
-                                    <td>{teacher.tenant_id}</td>
+                            {tenantList.map((tenant) => (
+                                <tr
+                                    key={tenant.id}
+                                    className="border-b last:border-0 hover:bg-gray-50 dark:hover:bg-neutral-700"
+                                >
+                                    <td>{tenant.id}</td>
+                                    <td>{tenant.school_name}</td>
+                                    <td>{tenant.address}</td>
+                                    <td>{tenant.school_email}</td>
                                     <td>
-                                        <div className='flex gap-3 items-center'>
-                                            <PenBox className='size-[32px] cursor-pointer bg-green-300 text-gray-800 p-1 rounded-sm' onClick={() => handleOpenEdit} />
-                                            <Trash2 className='size-[32px] cursor-pointer bg-red-600 text-gray-800 p-1 rounded-sm' onClick={() => handelDelete(teacher.teacher_id)} />
+                                        <div className="flex items-center gap-3">
+                                            <Eye
+                                                className="size-[32px] cursor-pointer rounded-sm bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 hover:dark:bg-gray-700 p-1 text-gray-800 dark:text-gray-200"
+                                                onClick={() =>
+                                                    handleOpenShow(tenant)
+                                                }
+                                            />
+                                            <PenBox
+                                                className="size-[32px] cursor-pointer rounded-sm bg-green-300 p-1 text-gray-800"
+                                                onClick={() =>
+                                                    handleOpenEdit(tenant)
+                                                }
+                                            />
+                                            <Trash2
+                                                className="size-[32px] cursor-pointer rounded-sm bg-red-600 p-1 text-gray-800"
+                                                onClick={() =>
+                                                    handelDelete(tenant.id)
+                                                }
+                                            />
                                         </div>
                                     </td>
                                 </tr>
@@ -130,36 +182,71 @@ export default function Index() {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>
-                            {isEdit ? 'Update Teacher' : 'Add Teacher'}
+                            {isEdit ? 'Update Tenant' : 'Add Tenant'}
                         </DialogTitle>
                     </DialogHeader>
-                    <form onSubmit={handleSubmit} className='space-y-4'>
-                        <div className='space-y-3 flex flex-col mt-2'>
-                            <Label htmlFor='nama_lengkap'>Nama lengkap</Label>
-                            <Input id='nama_lengkap' name='nama_lengkap' value={form.nama_lengkap} onChange={handleChange} required/>
-                            {/* {errors.email && <div className='text-red-500 text-sm mt-1'>{errors.email}</div>} */}
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="mt-2 flex flex-col space-y-3">
+                            <Label htmlFor="school_name">School Name</Label>
+                            <Input
+                                id="school_name"
+                                name="school_name"
+                                value={form.data.school_name}
+                                onChange={(e) => form.setData('school_name', e.target.value)}
+                                disabled={isShow}
+                                />
+                            {form.errors && <div className='text-sm text-red-500'>{form.errors.school_name}</div>}
                         </div>
-                        <div className='space-y-3 flex flex-col'>
-                            <Label htmlFor='panggilan'>Nama panggilan</Label>
-                            <Input id='panggilan' name='panggilan' value={form.panggilan} onChange={handleChange} required/>
+                        <div className="flex flex-col space-y-3">
+                            <Label htmlFor="address">Address</Label>
+                            <Input
+                                id="address"
+                                name="address"
+                                value={form.data.address}
+                                onChange={(e) =>
+                                    form.setData('address', e.target.value)
+                                }
+                                disabled={isShow}
+                                />
+                            {form.errors && <div className='text-sm text-red-500'>{form.errors.address}</div>}
                         </div>
-                        <div className='space-y-3 flex flex-col'>
-                            <Label htmlFor='subject'>Subject</Label>
-                            <Input id='subject' name='subject' value={form.subject} onChange={handleChange} required/>
+                        <div className="flex flex-col space-y-3">
+                            <Label htmlFor="school_email">School Email</Label>
+                            <Input
+                                id="school_email"
+                                name="school_email"
+                                value={form.data.school_email}
+                                onChange={(e) =>
+                                    form.setData('school_email', e.target.value)
+                                }
+                                disabled={isShow}
+                            />
+                            {form.errors && <div className='text-sm text-red-500'>{form.errors.school_email}</div>}
                         </div>
-                        {/* <div>
-                            <Label htmlFor='tenant_id'>Nama Sekolah</Label>
-                            <Select name='tenant_id'>
-                                <option value={form.tenant_id}>{form.school_name}</option>
-                            </Select>
-                        </div> */}
                         <div className="flex justify-end gap-3">
-                            <Button type='button' variant='outline' onClick={handleClose} className='cursor-pointer'>Cancel</Button>
-                            <Button type='submit' className='cursor-pointer'>{isEdit ? 'Update' : 'Add'}</Button>
+                            {(isEdit || isAdd) && (
+                                <Button type="submit" className="cursor-pointer">
+                                    {form.processing ?
+                                        isEdit
+                                            ? 'Updating...' : 'saving...'
+                                        : isEdit ? 'Update' : 'Add'
+                                    }
+                                    {form.processing && <Spinner />}
+                                </Button>
+                            )}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handleClose}
+                                className="cursor-pointer"
+                            >
+                                {isShow ? 'Close' : 'Cancel'}
+                            </Button>
                         </div>
                     </form>
                 </DialogContent>
             </Dialog>
+            <ModalKonfirmasi open={confirm} onConfirm={confirmDelete} onClose={() => setConfirm(false)} />
         </AppLayout>
     );
 }

@@ -4,7 +4,6 @@ import { Card } from '@/components/ui/card';
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
@@ -36,10 +35,10 @@ interface Teacher {
     tenant: Tenant | null;
 }
 interface FormErrors {
-  nama_lengkap?: string;
-  panggilan?: string;
-  subject?: string;
-  tenant_id?: string;
+    nama_lengkap?: string;
+    panggilan?: string;
+    subject?: string;
+    tenant_id?: string;
 }
 const emptyForm = {
     nama_lengkap: '',
@@ -50,26 +49,29 @@ const emptyForm = {
 type FormState = typeof emptyForm & { id?: number };
 
 export default function Index() {
-    const { teachers, tenants, sukses } = usePage<{
+    const { teachers, tenants, errors } = usePage<{
         teachers?: Teacher[];
         tenants?: Tenant[];
         sukses?: string;
+        errors?: FormErrors[];
     }>().props;
     const teacherList = teachers ?? [];
-    console.log(tenants, teacherList, sukses);
 
-    const [errors, setErrors] = useState<FormErrors>({});
+    // const [errors, setErrors] = useState<FormErrors>({});
     const [form, setForm] = useState<FormState>(emptyForm);
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [open, setOpen] = useState(false);
+    const [isAdd, setIsAdd] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
+    const [isShow, setIsShow] = useState(false);
     const [confirm, setConfirm] = useState(false);
 
-
-    const handleOpendAdd = () => {
+    const handleOpenAdd = () => {
         setForm(emptyForm);
         setIsEdit(false);
         setOpen(true);
+        setIsAdd(true);
+        setIsShow(false);
     };
 
     const handleOpenEdit = (teacher: Teacher) => {
@@ -82,12 +84,27 @@ export default function Index() {
         });
         setIsEdit(true);
         setOpen(true);
+        setIsShow(false)
     };
 
+    const handleShow = (teacher: Teacher) => {
+        setForm({
+            id: teacher.id,
+            nama_lengkap: teacher.nama_lengkap,
+            panggilan: teacher.panggilan,
+            subject: teacher.subject,
+            tenant_id: teacher.tenant_id,
+        });
+        setOpen(true);
+        setIsShow(true);
+        setIsAdd(false);
+        setIsEdit(false);
+    }
     const handleClose = () => {
         setOpen(false);
         setForm(emptyForm);
         setIsEdit(false);
+        setIsShow(false);
     };
 
     const handleChange = (
@@ -96,9 +113,9 @@ export default function Index() {
         const { name, value } = e.target;
         setForm({ ...form, [name]: value });
         // Opsional: hapus error saat user mulai mengetik
-        if (errors[name as keyof FormErrors]) {
-        setErrors({ ...errors, [name]: undefined });
-    }
+        // if (errors[name as keyof FormErrors]) {
+        //     setErrors({ ...errors, [name]: undefined });
+        // }
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -106,36 +123,37 @@ export default function Index() {
         if (isEdit && form.id) {
             router.put(route('teacher.update', form.id), form, {
                 onSuccess: handleClose,
+                preserveScroll : true //to make scroll position base on page before request run
             });
         } else {
             router.post(route('teacher.store'), form, {
                 onSuccess: handleClose,
             });
         }
-        setErrors({}); // reset error
+        // setErrors({}); // reset error
     };
-    console.log(errors)
+
     function handelDelete(id: number) {
         setSelectedId(id);
         setConfirm(true);
     }
+
     const confirmDelete = () => {
-    if (selectedId) {
-        router.delete(route('teacher.destroy', (selectedId)));
-    }
+        if (selectedId) {
+            router.delete(route('teacher.destroy', selectedId));
+        }
         setConfirm(false);
-    }
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Teacher" />
-            <Card className="h-full rounded-t-none border-t-0 p-6">
+            <Card className="h-full rounded-t-none border-t-0 py-5 px-7">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-semibold uppercase max-sm:text-center">
-                        Teachers
+                    <h2 className="text-lg font-semibold max-sm:text-center">
+                        Teachers List
                     </h2>
-                    {sukses && (<div className='text-green-300 text-sm'>{sukses}</div>)}
-                    <Button onClick={handleOpendAdd} className="cursor-pointer">
+                    <Button onClick={handleOpenAdd} className="cursor-pointer">
                         <PlusCircle />
                         Add Teacher
                     </Button>
@@ -145,30 +163,29 @@ export default function Index() {
                         <thead className="uppercase">
                             <tr>
                                 <th>id</th>
-                                <th>nama lengkap</th>
-                                <th>panggilan</th>
+                                <th>Full name</th>
+                                <th>nickname</th>
                                 <th>subject</th>
-                                <th>sekolah</th>
-                                <th className='text-center'>aksi</th>
+                                <th>School name</th>
+                                <th className="text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {teacherList.map((teacher) => (
+                            {teacherList.map((teacher, i) => (
                                 <tr
-                                    key={teacher.id}
-                                    className="border-b last:border-0 hover:bg-gray-50 dark:hover:bg-neutral-700"
+                                    key={i}
+                                    className="border-b last:border-0 hover:bg-gray-50 dark:hover:bg-neutral-700 capitalize"
                                 >
                                     <td>{teacher.id}</td>
                                     <td>{teacher.nama_lengkap}</td>
                                     <td>{teacher.panggilan}</td>
                                     <td>{teacher.subject}</td>
+                                    <td>{teacher.tenant?.school_name}</td>
                                     <td>
-                                        {teacher.tenant?.school_name}
-                                    </td>
-                                    <td>
-                                        <div className="flex items-center gap-3 justify-center">
+                                        <div className="flex items-center justify-center gap-3">
                                             <Eye
                                                 className="size-8 cursor-pointer rounded-md bg-slate-200 p-1 hover:bg-slate-300 dark:bg-slate-800 hover:dark:bg-slate-700"
+                                                onClick={() => handleShow(teacher)}
                                             />
                                             <PenBox
                                                 className="size-8 cursor-pointer rounded-sm bg-green-300 p-1 text-gray-800 hover:bg-green-400"
@@ -196,7 +213,6 @@ export default function Index() {
                         <DialogTitle>
                             {isEdit ? 'Update Teacher' : 'Add Teacher'}
                         </DialogTitle>
-                        <DialogDescription />
                     </DialogHeader>
                     <form onSubmit={handleSubmit} className="space-y-4.5">
                         <div className="mt-2 flex flex-col space-y-3">
@@ -206,9 +222,14 @@ export default function Index() {
                                 name="nama_lengkap"
                                 value={form.nama_lengkap}
                                 onChange={handleChange}
-                                required
+                                className='capitalize'
+                                disabled={isShow}
                             />
-                            {errors.nama_lengkap && (<div className='text-red-500 text-sm mt-1'>{errors.nama_lengkap[0]}</div>)}
+                            {errors.nama_lengkap && (
+                                <div className="mt-1 text-sm text-red-500">
+                                    {errors.nama_lengkap}
+                                </div>
+                            )}
                         </div>
                         <div className="flex flex-col space-y-3">
                             <Label htmlFor="panggilan">Nama panggilan</Label>
@@ -217,9 +238,14 @@ export default function Index() {
                                 name="panggilan"
                                 value={form.panggilan}
                                 onChange={handleChange}
-                                required
+                                disabled={isShow}
+                                className='capitalize'
                             />
-                            {errors.panggilan && (<div className='text-red-500 text-sm mt-1'>{errors.panggilan[0]}</div>)}
+                            {errors.panggilan && (
+                                <div className="mt-1 text-sm text-red-500">
+                                    {errors.panggilan}
+                                </div>
+                            )}
                         </div>
                         <div className="flex flex-col space-y-3">
                             <Label htmlFor="subject">Subject</Label>
@@ -228,9 +254,14 @@ export default function Index() {
                                 name="subject"
                                 value={form.subject}
                                 onChange={handleChange}
-                                required
+                                className='capitalize'
+                                disabled={isShow}
                             />
-                            {errors.subject && (<div className='text-red-500 text-sm mt-1'>{errors.subject[0]}</div>)}
+                            {errors.subject && (
+                                <div className="mt-1 text-sm text-red-500">
+                                    {errors.subject}
+                                </div>
+                            )}
                         </div>
                         <div className="flex flex-col space-y-3">
                             <Label htmlFor="tenant_id">Nama Sekolah</Label>
@@ -239,35 +270,45 @@ export default function Index() {
                                 name="tenant_id"
                                 value={form.tenant_id}
                                 onChange={handleChange}
-                                // readOnly={!isEdit}
-                                required={isEdit}
-                                className="w-full cursor-pointer rounded-md border border-neutral-300 px-3 py-2 text-sm focus:outline-1 dark:border-neutral-800 dark:bg-neutral-950"
+                                disabled={isShow}
+                                className="w-full cursor-pointer rounded-md border border-neutral-300 px-3 py-2 text-sm focus:outline-1 dark:border-neutral-800 dark:bg-neutral-950 capitalize disabled:text-muted-foreground disabled:cursor-auto"
                             >
+                                {!isEdit && <option value=''>--Choose School--</option>}
                                 {tenants?.map((tenant) => (
                                     <option key={tenant.id} value={tenant.id}>
                                         {tenant.school_name}
                                     </option>
                                 )) || null}
                             </select>
-                            {errors.tenant_id && (<div className='text-red-500 text-sm mt-1'>{errors.tenant_id}</div>)}
+                            {errors.tenant_id && (
+                                <div className="mt-1 text-sm text-red-500">
+                                    {errors.tenant_id}
+                                </div>
+                            )}
                         </div>
                         <div className="flex justify-end gap-3">
+                            {(isEdit || isAdd) && (
+                                <Button type="submit" className="cursor-pointer">
+                                    {isEdit ? 'Update' : 'Add'}
+                                </Button>
+                            )}
                             <Button
                                 type="button"
                                 variant="outline"
                                 onClick={handleClose}
                                 className="cursor-pointer"
                             >
-                                Cancel
-                            </Button>
-                            <Button type="submit" className="cursor-pointer">
-                                {isEdit ? 'Update' : 'Add'}
+                                {isShow ? 'Close' : 'Cancel'}
                             </Button>
                         </div>
                     </form>
                 </DialogContent>
             </Dialog>
-            <ModalKonfirmasi open={confirm} onConfirm={confirmDelete} onClose={() => setConfirm(false)} />
+            <ModalKonfirmasi
+                open={confirm}
+                onConfirm={confirmDelete}
+                onClose={() => setConfirm(false)}
+            />
         </AppLayout>
     );
 }

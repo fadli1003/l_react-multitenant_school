@@ -50,7 +50,7 @@ class StudentController extends Controller
         //     return back()->withErrors(['Terjadi kesalahan saat input data'])->withInput();
         // }
 
-        return redirect()->back()->with('sukses', 'Student added successfully');
+        return redirect()->route('student.index')->with('sukses', 'Student added successfully');
     }
 
     /**
@@ -86,6 +86,8 @@ class StudentController extends Controller
         $student->grade = $request->grade;
         $student->tenant_id = $request->tenant_id;
         $student->update();
+
+        return session()->flash('success', 'Student data updated successfully.');
     }
 
     /**
@@ -93,6 +95,7 @@ class StudentController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        Student::findOrFail($id)->delete();
+        return redirect()->route('student.index')->with('success', "Student's data deleted successfully.");
     }
 }

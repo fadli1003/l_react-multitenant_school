@@ -13,13 +13,13 @@ class Course extends Model
         'teacher_id',
     ];
 
-    public function tenants()
+    public function tenant()
     {
-        return $this->belongsToMany(Tenant::class);
+        return $this->belongsTo(Tenant::class);
     }
-    public function teachers()
+    public function teacher()
     {
-        return $this->hasMany(Teacher::class);
+        return $this->belongsTo(Teacher::class);
     }
     public function enrollments()
     {

@@ -52,7 +52,7 @@ class User extends Authenticatable
     }
 
     // public $foreignkey = 'tenant_id';
-    public function tenants()
+    public function tenant()
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }

@@ -1,7 +1,7 @@
 import ModalKonfirmasi from '@/components/tambahan/confirm-modal';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader } from '@/components/ui/card';
-import { Dialog, DialogDescription, DialogHeader } from '@/components/ui/dialog';
+import { Dialog, DialogHeader } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
@@ -176,9 +176,6 @@ export default function Index(
                                 <DialogTitle className="text-center font-semibold">
                                    {isEdit ? 'Edit Informasi User' : 'Informasi User'}
                                 </DialogTitle>
-                                <DialogDescription className='text-center'>
-                                    {isShow ? 'User Information': 'Update user Information'}
-                                </DialogDescription>
                             </DialogHeader>
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div className="mt-2 flex flex-col space-y-3">
@@ -205,7 +202,7 @@ export default function Index(
                                 </div>
                                 {isEdit &&
                                     <div className="flex flex-col space-y-3">
-                                        <Label htmlFor="pw">Password User</Label>
+                                        <Label htmlFor="pw">User Password</Label>
                                         <Input
                                             id="pw"
                                             name="pw"

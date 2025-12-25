@@ -8,7 +8,7 @@ class Tenant extends Model
 {
     protected $fillable = [
         'school_name',
-        'adress',
+        'address',
         'school_email',
     ];
 
@@ -22,14 +22,14 @@ class Tenant extends Model
     }
     public function courses()
     {
-        return $this->belongsToMany(Course::class);
+        return $this->hasMany(Course::class);
     }
     public function enrollments()
     {
-        return $this->belongsToMany(Enrollment::class);
+        return $this->hasMany(Enrollment::class);
     }
-    public function users()
+    public function user()
     {
-        return $this->belongsToMany(User::class);
+        return $this->belongsTo(User::class);
     }
 }

@@ -19,7 +19,7 @@ export default function Create() {
 
     const {data, setData, errors, post} = useForm({
         id: '',
-        name: '',
+        nama: '',
         email: '',
         pw: '',
     });
@@ -41,14 +41,14 @@ export default function Create() {
                                 <label className='pl-1'>Nama</label>
                                 <input
                                 type='text'
-                                id='name'
-                                name='name'
+                                id='nama'
+                                name='nama'
                                 placeholder='Masukkan nama lengkap'
-                                value={data.name}
-                                onChange={(e) => setData('name', e.target.value)}
+                                value={data.nama}
+                                onChange={(e) => setData('nama', e.target.value)}
                                 className='w-full py-1.5 px-3 rounded-md broder-border border-1 ring-0 focus:ring-0 focus:outline-1 focus:outline-gray-300'
                                 />
-                                {errors.name && <div className='text-red-500 text-sm mt-1'>{errors.name}</div>}
+                                {errors.nama && <div className='text-red-500 text-sm mt-1'>{errors.nama}</div>}
                             </div>
                             <div className='mb-3 flex flex-col space-y-1'>
                                 <label className='pl-1'>Email</label>

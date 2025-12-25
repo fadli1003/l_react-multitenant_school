@@ -10,20 +10,19 @@ class Enrollment extends Model
         'tenant_id',
         'student_id',
         'course_id',
-        'name',
         'enrollment_date'
     ];
 
-    public function tenants()
+    public function tenant()
     {
-        return $this->belongsToMany(Tenant::class);
+        return $this->belongsTo(Tenant::class);
     }
-    public function students()
+    public function student()
     {
-        return $this->hasMany(Student::class);
+        return $this->belongsTo(Student::class);
     }
-    public function courses()
+    public function course()
     {
-        return $this->hasMany(Course::class);
+        return $this->belongsTo(Course::class);
     }
 }

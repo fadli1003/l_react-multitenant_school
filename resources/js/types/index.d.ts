@@ -20,6 +20,13 @@ export interface NavItem {
     href: NonNullable<InertiaLinkProps['href']>;
     icon?: LucideIcon | null;
     isActive?: boolean;
+    subItem?: SubItem[];
+}
+// adding type
+interface SubItem {
+    subTitle?: string;
+    href?: NonNullable<InertiaLinkProps['href']>;
+    icon?: LucideIcon | null;
 }
 
 export interface SharedData {

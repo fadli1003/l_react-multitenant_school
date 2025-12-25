@@ -1,123 +1,189 @@
 import AppLayout from '@/layouts/app-layout';
 import { useState } from 'react';
 import { route } from 'ziggy-js';
-import { PenBox, Trash2 } from 'lucide-react';
+import { Eye, PenBox, Trash2 } from 'lucide-react';
 import { type BreadcrumbItem } from '@/types';
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Spinner } from '@/components/ui/spinner';
+import ModalKonfirmasi from '@/components/tambahan/confirm-modal';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Teacher',
-        href: '/teacher',
+        title: 'Enrollment',
+        href: route('enrollment.index'),
     },
 ];
-interface Teacher {
-        teacher_id: number;
+interface Enrollment {
+        id: number;
         tenant_id: number;
-        nama_lengkap: string;
-        panggilan: string;
-        subject: string;
+        student_id: number;
+        course_id: number;
+        tenant?: Tenant;
+        student?: Student;
+        course?: Course;
+        enrollment_date: string;
     }
+interface Tenant {
+    id: number;
+    school_name: string;
+}
+interface Student {
+    id: number;
+    nama_lengkap: string;
+}
+interface Course {
+    id: number;
+    course_name: string;
+}
 
-const emptyForm = { nama_lengkap: '', panggilan: '', subject: ''}
-
-type FormState = typeof emptyForm & { id?: number }
+interface FormState {
+    id?: number
+    tenant_id?: number
+    student_id?: number
+    course_id?: number
+    name?: string
+    enrollment_date?: string
+}
+const emptyForm: FormState = {
+    id: undefined,
+    tenant_id: undefined,
+    student_id: undefined,
+    course_id: undefined,
+    enrollment_date: ''
+}
 
 export default function Index() {
-    const { teachers } = usePage<{teachers?: Teacher[]}>().props;
-    const teacherList = teachers ?? [];
+    const { enrollments, students, courses, tenants } = usePage<{
+        enrollments?: Enrollment[];
+        students?: Student[];
+        tenants?: Tenant[];
+        courses?: Course[];
+    }>().props;
+    const enrollmentList = enrollments ?? [];
 
     const [open, setOpen] = useState(false);
-    const [form, setForm] = useState<FormState>(emptyForm);
+    const [isAdd, setIsAdd] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
+    const [isShow, setIsShow] = useState(false);
+    const [selectedId, setSelectedId] = useState<number | null>(null);
+    const [isConfirm, setIsConfirm ] = useState(false);
+    const form = useForm<FormState>(emptyForm)
 
-    const handleOpendAdd = () => {
-        setForm(emptyForm);
+    const normalizeDate = (date?: string) => {
+        if(!date) return ''
+        return date.split('T')[0].split(' ')[0]
+    }
+    const handleOpenAdd = () => {
+        form.reset();
+        setIsAdd(true);
         setIsEdit(false);
+        setIsShow(false);
         setOpen(true);
     }
 
-    const handleOpenEdit = (teacher : Teacher) => {
-        setForm({
-            id: teacher.teacher_id,
-            nama_lengkap: teacher.nama_lengkap,
-            panggilan: teacher.panggilan,
-            subject: teacher.subject
+    const handleOpenEdit = (enrollment: Enrollment) => {
+        form.setData({
+            id: enrollment.id,
+            tenant_id: enrollment.tenant_id,
+            student_id: enrollment.student_id,
+            course_id: enrollment.course_id,
+            enrollment_date: normalizeDate(enrollment.enrollment_date),
         });
         setIsEdit(true);
         setOpen(true);
+        setIsShow(false);
+    }
+
+    const handleOpenShow = (enrollment: Enrollment) => {
+        form.setData({
+            id: enrollment.id,
+            tenant_id: enrollment.tenant_id,
+            student_id: enrollment.student_id,
+            course_id: enrollment.course_id,
+            enrollment_date: normalizeDate(enrollment.enrollment_date),
+        });
+        setOpen(true);
+        setIsShow(true);
+        setIsAdd(false);
+        setIsEdit(false);
     }
 
     const handleClose = () => {
         setOpen(false);
-        setForm(emptyForm);
+        form.reset();
         setIsEdit(false);
-    }
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
+        setIsShow(false);
+        setIsAdd(false);
     }
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (isEdit && form.id) {
-            router.put(route('pengguna.update', form.id), form, { onSuccess: handleClose });
-        } else {
-            router.post(route('pengguna.store'), form, { onSuccess : handleClose });
+        if (isEdit && form.data.id) {
+            form.put(route('enrollment.update', form.data.id), {
+                onSuccess: () => (handleClose(), form.reset())
+            });
+        } else if (isAdd) {
+            form.post(route('enrollment.store'), {
+                onSuccess : () => (handleClose ())
+            });
         }
     }
+
 
     function handelDelete(id: number) {
-        if (confirm('Are you sure want to delete this teacher?')) {
-            router.delete(route('pengguna.destroy', id));
-        }
+        setSelectedId(id);
+        setIsConfirm(true)
     }
-
-    // const {errors} = useForm({
-    //         id: '',
-    //         nama: teachers.nama_lengkap||'',
-    //         email: teachers.panggilan||'',
-    //         pw: '',
-    // });
-    // const {props} = usePage();
-    // const {sukses} = props as {sukses?: string};
+    function confirmDelete () {
+        if (selectedId) {
+            form.delete(route('enrollment.destroy', selectedId), {
+                onSuccess: () => setSelectedId(null)
+            })
+        }
+        setIsConfirm(false)
+    }
+    console.log(form.data)
 
     return (
         <AppLayout breadcrumbs={breadcrumbs} >
+            <Head title="Enrollment" />
             <Card className='p-6 mt-6'>
                 <div className='flex items-center justify-between mb-4'>
-                    <Head title="Teacher" />
-                    <Button onClick={handleOpendAdd} className='cursor-pointer'>Add Teacher</Button>
+                    <Button onClick={handleOpenAdd} className='cursor-pointer'>Add enrollment</Button>
                 </div>
                 <div className="overflow-x-auto rounded-md">
                     <table className='tabel'>
                         <thead className='uppercase'>
                             <tr>
                                 <th>id</th>
-                                <th>nama lengkap</th>
-                                <th>panggilan</th>
-                                <th>subject</th>
-                                <th>sekolah</th>
+                                <th>tenant_id</th>
+                                <th>student_id</th>
+                                <th>course_id</th>
+                                <th>enrollment_date</th>
                                 <th>aksi</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {teacherList.map((teacher) => (
-                                <tr key={teacher.teacher_id} className='border-b last:border-0 hover:bg-gray-50 dark:hover:bg-neutral-700'>
-                                    <td>{teacher.teacher_id}</td>
-                                    <td>{teacher.nama_lengkap}</td>
-                                    <td>{teacher.panggilan}</td>
-                                    <td>{teacher.subject}</td>
-                                    <td>{teacher.tenant_id}</td>
+                            {enrollmentList.map((enrollment) => (
+                                <tr key={enrollment.id} className='border-b last:border-0 hover:bg-gray-50 dark:hover:bg-neutral-700'>
+                                    <td>{enrollment.id}</td>
+                                    <td>{enrollment.tenant?.school_name}</td>
+                                    <td>{enrollment.student?.nama_lengkap}</td>
+                                    <td>{enrollment.course?.course_name}</td>
+                                    <td>{normalizeDate(enrollment.enrollment_date)}</td>
                                     <td>
                                         <div className='flex gap-3 items-center'>
-                                            <PenBox className='size-[32px] cursor-pointer bg-green-300 text-gray-800 p-1 rounded-sm' onClick={() => handleOpenEdit} />
-                                            <Trash2 className='size-[32px] cursor-pointer bg-red-600 text-gray-800 p-1 rounded-sm' onClick={() => handelDelete(teacher.teacher_id)} />
+                                            <Eye
+                                                className='size-[32px] cursor-pointer bg-gray-300 dark:bg-gray-700 dark:text-gray-200 text-gray-800 p-1 rounded-sm'
+                                                onClick={() => handleOpenShow(enrollment)}
+                                            />
+                                            <PenBox className='size-[32px] cursor-pointer bg-green-300 text-gray-800 p-1 rounded-sm' onClick={() => handleOpenEdit(enrollment)} />
+                                            <Trash2 className='size-[32px] cursor-pointer bg-red-600 text-gray-800 p-1 rounded-sm' onClick={() => handelDelete(enrollment.id)} />
                                         </div>
                                     </td>
                                 </tr>
@@ -129,37 +195,105 @@ export default function Index() {
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>
-                            {isEdit ? 'Update Teacher' : 'Add Teacher'}
+                        <DialogTitle className='text-center'>
+                            {isEdit ? 'Update Enrollment' : isAdd ? 'Add Enrollment' : 'Enrollment Information'}
                         </DialogTitle>
                     </DialogHeader>
                     <form onSubmit={handleSubmit} className='space-y-4'>
-                        <div className='space-y-3 flex flex-col mt-2'>
-                            <Label htmlFor='nama_lengkap'>Nama lengkap</Label>
-                            <Input id='nama_lengkap' name='nama_lengkap' value={form.nama_lengkap} onChange={handleChange} required/>
-                            {/* {errors.email && <div className='text-red-500 text-sm mt-1'>{errors.email}</div>} */}
+                        <div className='space-y-3 flex flex-col'>
+                            <Label htmlFor='tenant_id'>School Name</Label>
+                            <select
+                                id='tenant_id'
+                                name='tenant_id'
+                                value={form.data.tenant_id}
+                                onChange={(e) => form.setData('tenant_id', Number(e.target.value))}
+                                disabled={isShow}
+                                className='disabled:text-muted-foreground'
+                            >
+                                {!isEdit && <option value=''>Choose School</option>}
+                                {tenants?.map((t, i) => (
+                                    <option key={i} value={t.id}>{t.school_name}</option>
+                                ))}
+                            </select>
+                            {form.errors.tenant_id && <div className='text-red-500 text-sm mt-1'>{form.errors.tenant_id}</div>}
                         </div>
                         <div className='space-y-3 flex flex-col'>
-                            <Label htmlFor='panggilan'>Nama panggilan</Label>
-                            <Input id='panggilan' name='panggilan' value={form.panggilan} onChange={handleChange} required/>
+                            <Label htmlFor='student_id'>Student Name</Label>
+                            <select
+                                id='student_id'
+                                name='student_id'
+                                value={form.data.student_id}
+                                onChange={(e) => form.setData('student_id', Number(e.target.value))}
+                                disabled={isShow}
+                                className='disabled:text-muted-foreground'
+                            >
+                                {!isEdit && <option value=''>Choose Student Name</option>}
+                                {students?.map((student, i) => (
+                                    <option key={i} value={student.id}>{student.nama_lengkap}</option>
+                                ))}
+                            </select>
+                            {form.errors.student_id && <div className='text-red-500 text-sm mt-1'>{form.errors.student_id}</div>}
                         </div>
                         <div className='space-y-3 flex flex-col'>
-                            <Label htmlFor='subject'>Subject</Label>
-                            <Input id='subject' name='subject' value={form.subject} onChange={handleChange} required/>
+                            <Label htmlFor='course_id'>Course Name</Label>
+                            <select
+                                id='course_id'
+                                name='course_id'
+                                value={form.data.course_id}
+                                onChange={(e) => form.setData('course_id', Number(e.target.value))}
+                                disabled={isShow}
+                                className='disabled:text-muted-foreground'
+                            >
+                                {!isEdit && <option value=''>Choose Course Name</option>}
+                                {courses?.map((course, i) => (
+                                    <option key={i} value={course.id}>{course.course_name}</option>
+                                ))}
+                            </select>
+                            {form.errors.course_id && <div className='text-red-500 text-sm mt-1'>{form.errors.course_id}</div>}
                         </div>
-                        {/* <div>
-                            <Label htmlFor='tenant_id'>Nama Sekolah</Label>
-                            <Select name='tenant_id'>
-                                <option value={form.tenant_id}>{form.school_name}</option>
-                            </Select>
-                        </div> */}
+                        <div>
+                            <Label htmlFor='enrollment_date'>Enrollment Date</Label>
+                            <Input
+                                id='enrollment_date'
+                                name='enrollment_date'
+                                type='date'
+                                value={form.data.enrollment_date}
+                                onChange={(e) => form.setData('enrollment_date', e.target.value)}
+                                disabled={isShow}
+                            />
+                            {form.errors.enrollment_date && <div className='text-red-500 text-sm mt-1'>{form.errors.enrollment_date}</div>}
+                        </div>
                         <div className="flex justify-end gap-3">
-                            <Button type='button' variant='outline' onClick={handleClose} className='cursor-pointer'>Cancel</Button>
-                            <Button type='submit' className='cursor-pointer'>{isEdit ? 'Update' : 'Add'}</Button>
+                            {!isShow &&
+                                <Button
+                                    type='submit'
+                                    className='cursor-pointer'
+                                    disabled={form.processing}
+                                >
+                                    {form.processing
+                                        ? (<>
+                                                {isEdit ? 'Updating...' : 'Saving...'}
+                                                    <Spinner />
+                                            </>)
+                                        : isEdit ? 'Update' : 'Add'
+                                    }
+                                </Button>
+                            }
+                            <Button
+                                type='button'
+                                variant='outline'
+                                onClick={handleClose}
+                                className='cursor-pointer'
+                            >{isShow ? 'Close' : 'Cancel'}</Button>
                         </div>
                     </form>
                 </DialogContent>
             </Dialog>
+            <ModalKonfirmasi
+                open={isConfirm}
+                onConfirm={confirmDelete}
+                onClose={() => setIsConfirm(false)}
+            />
         </AppLayout>
     );
 }

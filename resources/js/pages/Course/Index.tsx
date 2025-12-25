@@ -1,123 +1,182 @@
-import AppLayout from '@/layouts/app-layout';
-import { useState } from 'react';
-import { route } from 'ziggy-js';
-import { PenBox, Trash2 } from 'lucide-react';
-import { type BreadcrumbItem } from '@/types';
-import { Head, router, usePage } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import ModalKonfirmasi from '@/components/tambahan/confirm-modal'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import AppLayout from '@/layouts/app-layout'
+import course from '@/routes/course'
+import { type BreadcrumbItem } from '@/types'
+import { Head, useForm, usePage } from '@inertiajs/react'
+import { Eye, Loader2, PenBox, PlusCircle, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { route } from 'ziggy-js'
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Teacher',
-        href: '/teacher',
+        title: 'Courses',
+        href: course.index().url,
     },
 ];
+interface Tenant {
+    id: number;
+    school_name: string
+}
 interface Teacher {
-        teacher_id: number;
-        tenant_id: number;
-        nama_lengkap: string;
-        panggilan: string;
-        subject: string;
-    }
+    id: number
+    nama_lengkap: string
+}
 
-const emptyForm = { nama_lengkap: '', panggilan: '', subject: ''}
+interface Course {
+    id: number
+    teacher_id: string
+    tenant_id: string
+    course_name: string
+    tenant: Tenant | null
+    teacher: Teacher | null
+}
 
+const emptyForm = { teacher_id: '', tenant_id: '', course_name: '' }
 type FormState = typeof emptyForm & { id?: number }
 
 export default function Index() {
-    const { teachers } = usePage<{teachers?: Teacher[]}>().props;
-    const teacherList = teachers ?? [];
+    const { courses, tenants, teachers } = usePage<{
+        courses?: Course[]
+        tenants?: Tenant[]
+        teachers?: Teacher[]
+        sukses?: string
+    }>().props
+    const coursesList = courses ?? []
 
-    const [open, setOpen] = useState(false);
-    const [form, setForm] = useState<FormState>(emptyForm);
-    const [isEdit, setIsEdit] = useState(false);
+    const [open, setOpen] = useState(false)
+    const [isAdd, setIsAdd] = useState(false)
+    const [isEdit, setIsEdit] = useState(false)
+    const [isShow, setIsShow] = useState(false)
+    const [confirm, setConfirm] = useState(false)
+    const form = useForm<FormState>(emptyForm)
+    const [selectedId, setSelectedId] = useState<number | null>(null)
 
-    const handleOpendAdd = () => {
-        setForm(emptyForm);
-        setIsEdit(false);
-        setOpen(true);
+    const handleOpenAdd = () => {
+        form.setData(emptyForm)
+        setIsEdit(false)
+        setOpen(true)
+        setIsAdd(true)
     }
 
-    const handleOpenEdit = (teacher : Teacher) => {
-        setForm({
-            id: teacher.teacher_id,
-            nama_lengkap: teacher.nama_lengkap,
-            panggilan: teacher.panggilan,
-            subject: teacher.subject
-        });
-        setIsEdit(true);
-        setOpen(true);
+    const handleOpenEdit = (course: Course) => {
+        form.setData({
+            id: course.id,
+            tenant_id: course.tenant_id,
+            teacher_id: course.teacher_id,
+            course_name: course.course_name,
+        })
+        setSelectedId(course.id)
+        setIsEdit(true)
+        setOpen(true)
+        setIsAdd(false)
+    }
+
+    const handleOpenShow = (course: Course) => {
+        form.setData({
+            id: course.id,
+            tenant_id: course.tenant_id,
+            teacher_id: course.teacher_id,
+            course_name: course.course_name,
+        })
+        setIsShow(true)
+        setOpen(true)
+        setIsAdd(false)
+        setIsEdit(false)
     }
 
     const handleClose = () => {
-        setOpen(false);
-        setForm(emptyForm);
-        setIsEdit(false);
-    }
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
+        setOpen(false)
+        form.reset()
     }
 
     const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (isEdit && form.id) {
-            router.put(route('pengguna.update', form.id), form, { onSuccess: handleClose });
-        } else {
-            router.post(route('pengguna.store'), form, { onSuccess : handleClose });
+        e.preventDefault()
+        if (isEdit && selectedId) {
+            form.put(route('course.update', selectedId), {
+                onSuccess: handleClose,
+            })
+        }
+        else if(isAdd) {
+            form.post(route('course.store'), {
+                onSuccess: handleClose,
+            })
         }
     }
-
-    function handelDelete(id: number) {
-        if (confirm('Are you sure want to delete this teacher?')) {
-            router.delete(route('pengguna.destroy', id));
-        }
+    const handleDelete = (id: number) => {
+        setSelectedId(id)
+        setConfirm(true)
     }
-
-    // const {errors} = useForm({
-    //         id: '',
-    //         nama: teachers.nama_lengkap||'',
-    //         email: teachers.panggilan||'',
-    //         pw: '',
-    // });
-    // const {props} = usePage();
-    // const {sukses} = props as {sukses?: string};
+    const confirmDelete = () => {
+        if (selectedId) {
+            form.delete(route('course.destroy', selectedId), {
+                onSuccess: () => setSelectedId(null)
+            })
+        }
+        setConfirm(false)
+    }
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs} >
-            <Card className='p-6 mt-6'>
-                <div className='flex items-center justify-between mb-4'>
-                    <Head title="Teacher" />
-                    <Button onClick={handleOpendAdd} className='cursor-pointer'>Add Teacher</Button>
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title="Course" />
+            <Card className="border-t-0 rounded-t-none py-5 pb-7 px-7 max-md:p-5 overflow-hidden">
+                <div className="grid md:grid-cols-3 grid-cols-2 items-center">
+                    <h2 className='font-semibold text-xl'>Course List</h2>
+                    <div className='text-center'>
+                    {/* {sukses &&
+                        <span className='text-green-500 md:justify-self-center max-md:justify-self-end w-fit text-sm bg-blue-500/10 py-1 px-3 rounded-2xl'>{sukses}</span>
+                    } */}
+                    </div>
+                    <Button onClick={handleOpenAdd} className="cursor-pointer w-fit md:justify-self-end max-md:mt-2">
+                        <PlusCircle /> Add Course
+                    </Button>
                 </div>
                 <div className="overflow-x-auto rounded-md">
-                    <table className='tabel'>
-                        <thead className='uppercase'>
+                    <table className="tabel">
+                        <thead className="uppercase">
                             <tr>
                                 <th>id</th>
-                                <th>nama lengkap</th>
-                                <th>panggilan</th>
-                                <th>subject</th>
-                                <th>sekolah</th>
-                                <th>aksi</th>
+                                <th>Course Name</th>
+                                <th>School Name</th>
+                                <th>Teacher Name</th>
+                                <th className='text-center'>aksi</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {teacherList.map((teacher) => (
-                                <tr key={teacher.teacher_id} className='border-b last:border-0 hover:bg-gray-50 dark:hover:bg-neutral-700'>
-                                    <td>{teacher.teacher_id}</td>
-                                    <td>{teacher.nama_lengkap}</td>
-                                    <td>{teacher.panggilan}</td>
-                                    <td>{teacher.subject}</td>
-                                    <td>{teacher.tenant_id}</td>
+                            {coursesList.map((course) => (
+                                <tr
+                                    key={course.id}
+                                    className="border-b last:border-0 hover:bg-gray-50 dark:hover:bg-neutral-700"
+                                >
+                                    <td>{course.id}</td>
+                                    <td>{course.course_name}</td>
+                                    <td>{course.tenant?.school_name}</td>
+                                    <td>{course.teacher?.nama_lengkap}</td>
                                     <td>
-                                        <div className='flex gap-3 items-center'>
-                                            <PenBox className='size-[32px] cursor-pointer bg-green-300 text-gray-800 p-1 rounded-sm' onClick={() => handleOpenEdit} />
-                                            <Trash2 className='size-[32px] cursor-pointer bg-red-600 text-gray-800 p-1 rounded-sm' onClick={() => handelDelete(teacher.teacher_id)} />
+                                        <div className="flex justify-center items-center gap-3">
+                                            <Eye
+                                                className="size-[30px] cursor-pointer rounded-sm bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-700 hover:dark:bg-neutral-600 p-1 dark:text-neutral-100 text-gray-800"
+                                                onClick={() => handleOpenShow(course)}
+                                            />
+                                            <PenBox
+                                                className="size-[30px] cursor-pointer rounded-sm bg-green-300 p-1 text-gray-800 hover:bg-green-400"
+                                                onClick={() => handleOpenEdit(course)}
+                                            />
+                                            <Trash2
+                                                className="size-[30px] cursor-pointer rounded-sm bg-red-600 hover:bg-red-700 p-1 text-gray-100"
+                                                onClick={() =>
+                                                    handleDelete(course.id)
+                                                }
+                                            />
                                         </div>
                                     </td>
                                 </tr>
@@ -129,37 +188,116 @@ export default function Index() {
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>
-                            {isEdit ? 'Update Teacher' : 'Add Teacher'}
+                        <DialogTitle className='text-center'>
+                            {isEdit ? 'Update Course' : 'Add Course'}
                         </DialogTitle>
                     </DialogHeader>
-                    <form onSubmit={handleSubmit} className='space-y-4'>
-                        <div className='space-y-3 flex flex-col mt-2'>
-                            <Label htmlFor='nama_lengkap'>Nama lengkap</Label>
-                            <Input id='nama_lengkap' name='nama_lengkap' value={form.nama_lengkap} onChange={handleChange} required/>
-                            {/* {errors.email && <div className='text-red-500 text-sm mt-1'>{errors.email}</div>} */}
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="mt-2 flex flex-col space-y-3">
+                            <Label htmlFor="course_name">Course Name</Label>
+                            <Input
+                                id="course_name"
+                                name="course_name"
+                                value={form.data.course_name}
+                                onChange={(e) =>
+                                        form.setData(
+                                            'course_name',
+                                            e.target.value,
+                                        )
+                                    }
+                                disabled={isShow}
+                            />
+                            {form.errors.course_name && <div className='text-red-500 text-sm'>{form.errors.course_name}</div>}
                         </div>
-                        <div className='space-y-3 flex flex-col'>
-                            <Label htmlFor='panggilan'>Nama panggilan</Label>
-                            <Input id='panggilan' name='panggilan' value={form.panggilan} onChange={handleChange} required/>
+                        <div className="flex flex-col space-y-3">
+                            <Label htmlFor="tenant_id">School Name</Label>
+                            <select
+                                id="tenant_id"
+                                name="tenant_id"
+                                value={form.data.tenant_id}
+                                onChange={(e) =>
+                                        form.setData(
+                                            'tenant_id',
+                                            e.target.value,
+                                        )
+                                    }
+                                disabled={isShow}
+                                className='py-2 px-3 border focus:outline-0 rounded-md dark:bg-neutral-950 text-sm cursor-pointer disabled:text-gray-500 disabled:cursor-auto'
+                            >
+                                {!isEdit && <option value="">Choose School</option>}
+                                {tenants?.map((tenant) => (
+                                    <option
+                                        key={tenant.id}
+                                        value={String(tenant.id)}
+                                    >{tenant.school_name}</option>
+                                ))}
+                            </select>
+                            {form.errors.tenant_id &&
+                                <div className='text-red-500 text-sm'>
+                                    {form.errors.tenant_id}
+                                </div>
+                            }
                         </div>
-                        <div className='space-y-3 flex flex-col'>
-                            <Label htmlFor='subject'>Subject</Label>
-                            <Input id='subject' name='subject' value={form.subject} onChange={handleChange} required/>
+                        <div className="flex flex-col space-y-3">
+                            <Label htmlFor="teacher_id">Teacher's Name</Label>
+                            <select
+                                id="teacher_id"
+                                name="teacher_id"
+                                value={form.data.teacher_id}
+                                onChange={(e) => form.setData('teacher_id', e.target.value)}
+                                // required={isEdit && isAdd}
+                                disabled={isShow}
+                                className='py-2 px-3 border focus:outline-0 rounded-md dark:bg-neutral-950 text-sm disabled:text-gray-500 disabled:cursor-auto cursor-pointer'
+                            >
+                                {!isEdit && <option value=''>Choose Teacher's Name</option>}
+                                {teachers?.map((teacher) => (
+                                    <option
+                                        key={teacher.id}
+                                        value={String(teacher.id)}
+                                    >{teacher.nama_lengkap}</option>
+                                ))}
+                            </select>
+                            {form.errors.teacher_id &&
+                                <div className='text-red-500 text-sm'>
+                                    {form.errors.teacher_id}
+                                </div>
+                            }
                         </div>
-                        {/* <div>
-                            <Label htmlFor='tenant_id'>Nama Sekolah</Label>
-                            <Select name='tenant_id'>
-                                <option value={form.tenant_id}>{form.school_name}</option>
-                            </Select>
-                        </div> */}
                         <div className="flex justify-end gap-3">
-                            <Button type='button' variant='outline' onClick={handleClose} className='cursor-pointer'>Cancel</Button>
-                            <Button type='submit' className='cursor-pointer'>{isEdit ? 'Update' : 'Add'}</Button>
+                            {(isEdit || isAdd) && (
+                                <Button
+                                    type="submit"
+                                    className="cursor-pointer"
+                                    disabled={form.processing}
+                                >
+                                    {form.processing
+                                        ? isEdit
+                                            ? 'Updating...'
+                                            : 'Saving...'
+                                        : isEdit
+                                            ? 'Update'
+                                            : 'Add'
+                                    }
+                                    {form.processing && <Loader2 className='animate-spin' />}
+                                </Button>
+                            )}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handleClose}
+                                className="cursor-pointer"
+                            >
+                                {isShow  ? 'Close' : 'Cancel'}
+                            </Button>
                         </div>
                     </form>
                 </DialogContent>
             </Dialog>
+            <ModalKonfirmasi
+                open={confirm}
+                onConfirm={confirmDelete}
+                onClose={() => setConfirm(false)}
+            />
         </AppLayout>
-    );
+    )
 }

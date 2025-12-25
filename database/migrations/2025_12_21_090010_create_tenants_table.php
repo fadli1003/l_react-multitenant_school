@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('tenants', function (Blueprint $table) {
             $table->id();
             $table->string('school_name', 100);
-            $table->string('adress', 255)->nullable();
+            $table->string('address', 255)->nullable();
             $table->string('school_email')->unique();
             $table->timestamps();
         });
