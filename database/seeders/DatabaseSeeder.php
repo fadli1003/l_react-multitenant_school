@@ -17,16 +17,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // User::factory(10)->create();
-
-        // User::firstOrCreate(
-        //     ['email' => 'test@example.com'],
-        //     [
-        //         'name' => 'Test User',
-        //         'password' => 'password',
-        //         'email_verified_at' => now(),
-        //     ]
-        // );
-
+        
         Tenant::create([
             'school_name' => 'SMA N 1 Batang Kapas',
             'adress' => 'Anakan, Batang Kapas',
@@ -38,5 +29,13 @@ class DatabaseSeeder extends Seeder
             'subject' => 'Informatika',
             'tenant_id' => 1,
         ]);
+        User::firstOrCreate(
+            ['email' => 'test@example.com'],
+            [
+                'name' => 'Test User',
+                'password' => 'password',
+                'email_verified_at' => now(),
+            ]
+        );
     }
 }

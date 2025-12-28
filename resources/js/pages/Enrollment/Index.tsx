@@ -76,7 +76,7 @@ export default function Index() {
 
     const normalizeDate = (date?: string) => {
         if(!date) return ''
-        return date.split('T')[0].split(' ')[0]
+        return date.split('T')[0]
     }
     const handleOpenAdd = () => {
         form.reset();
@@ -134,7 +134,6 @@ export default function Index() {
         }
     }
 
-
     function handelDelete(id: number) {
         setSelectedId(id);
         setIsConfirm(true)
@@ -152,8 +151,9 @@ export default function Index() {
     return (
         <AppLayout breadcrumbs={breadcrumbs} >
             <Head title="Enrollment" />
-            <Card className='p-6 mt-6'>
-                <div className='flex items-center justify-between mb-4'>
+            <Card className='p-6 h-full border-t-0 rounded-t-none'>
+                <div className='flex items-center justify-between'>
+                    <h3 className='text-xl font-semibold'>Enrollment Information</h3>
                     <Button onClick={handleOpenAdd} className='cursor-pointer'>Add enrollment</Button>
                 </div>
                 <div className="overflow-x-auto rounded-md">

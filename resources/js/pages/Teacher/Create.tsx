@@ -1,6 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, useForm} from '@inertiajs/react';
+import { Head, useForm, usePage} from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -15,14 +15,20 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: route('teacher.create'),
     },
 ];
+interface Tenant{
+    id: number
+    school_name: string
+}
 
 export default function Create() {
 
+    const {tenants} = usePage<{tenants?: Tenant[]}>().props
     const {data, setData,errors, post, processing, reset} = useForm({
         id: '',
         nama_lengkap: '',
         panggilan: '',
         subject: '',
+        tenant_id: '',
     });
     function submit(e: React.FormEvent){
         e.preventDefault();
@@ -61,7 +67,7 @@ export default function Create() {
                                 placeholder="Insert Teacher's Nickname"
                                 value={data.panggilan}
                                 onChange={(e) => setData('panggilan', e.target.value)}
-                                className='w-full py-2 px-3 rounded-md broder-border border-1 ring-0 focus:ring-0 focus:outline-1 text-sm'
+                                className='w-full py-2 px-3 rounded-md broder-border border ring-0 focus:ring-0 focus:outline-1 text-sm'
                                 />
                                 {errors.panggilan && <div className='text-red-500 text-sm mt-1'>{errors.panggilan}</div>}
                             </div>
@@ -75,6 +81,21 @@ export default function Create() {
                                 className='w-full py-2 px-3 rounded-md broder-border border-1 ring-0 focus:ring-0 focus:outline-1 text-sm'
                                 />
                                 {errors.subject && <div className='text-red-500 text-sm mt-0.5'>{errors.subject}</div>}
+                            </div>
+                            <div className='flex flex-col space-y-2'>
+                                <label htmlFor="tenant_id">School Name</label>
+                                <select
+                                    name="tenant_id"
+                                    id="tenant_id"
+                                    onChange={(e) => setData('tenant_id', e.target.value)}
+                                    className='w-full py-2 px-3 rounded-md broder-border border-1 ring-0 focus:ring-0 focus:outline-1 text-sm  cursor-pointer'
+                                    >
+                                    <option value="">--Choose School--</option>
+                                    {tenants?.map((tenant) => (
+                                        <option key={tenant.id} value={tenant.id}>{tenant.school_name}</option>
+                                    ))}
+                                </select>
+                                {errors.tenant_id && <div className='text-red-500 text-sm mt-1'>{errors.tenant_id}</div>}
                             </div>
                         </div>
                         <Button className='cursor-pointer'>

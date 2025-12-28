@@ -29,7 +29,7 @@ export const FlashMessage = () => {
         <div
             className={`fixed top-5 right-6 z-100 min-w-fit ${flash.error ? 'text-red-500' : flash.success ? 'text-green-500' : 'text-gray-800 dark:text-gray-300'}`}
         >
-            <span className="text-sm dark:bg-white-200/20 relative mb-0.5 rounded-md bg-black/20 px-3 py-1 dark:bg-white/20">
+            <span className="text-sm dark:bg-white-200/20 relative mb-0.5 rounded-md bg-black/10 px-3 py-1.5 dark:bg-white/10">
                 {flash.message || flash.error || flash.success}
                 <X
                     size={16}

@@ -58,14 +58,14 @@ class TenantController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified resource in storage. 
      */
     public function update(Request $request, string $id)
     {
         $request->validate([
-            'school_name' => 'required|string|max:100|unique:tenants,school_name,{$id}',
+            'school_name' => 'required|string|max:100|unique:tenants,school_name,'.$id,
             'address' => 'required|string|max:255',
-            'school_email' => 'required|email|unique:tenants,school_email,{$id}',
+            'school_email' => 'required|email|unique:tenants,school_email,'.$id,
         ]);
         Tenant::findOrFail($id)->update();
         return session()->flash('success', 'Tenant edited successfully.');

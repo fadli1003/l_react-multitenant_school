@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+            $table->string('role');
             $table->unsignedBigInteger('tenant_id')->nullable(); //add foreign to users table manually or recreate the users schema
             $table->string('name');
             $table->string('email')->unique();

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Student;
 use App\Models\Tenant;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class StudentController extends Controller
@@ -14,10 +15,22 @@ class StudentController extends Controller
      */
     public function index()
     {
+        $tenantId = Auth::user()->tenant_id;
+        // $students = [];
+        if(Auth::user()->role === 'super admin'){
+            $students = Student::with(['tenant:id,school_name'])
+                                ->get(['id', 'nama_lengkap', 'panggilan', 'grade', 'tenant_id']);
+            $tenants = Tenant::get(['id', 'school_name']);
+        } else {
+            $students = Student::where('tenant_id', $tenantId)
+                                    ->with(['tenant:id,school_name'])
+                                    ->get(['id', 'nama_lengkap', 'panggilan', 'grade', 'tenant_id']);
+            $tenants = Tenant::where('id', $tenantId)->get(['id', 'school_name']);
+        }
+
         return inertia('Student/Index', [
-            'tenants' => Tenant::get(['id', 'school_name']),
-            'students' => Student::with(['tenant:id,school_name'])
-                                ->get(['id', 'nama_lengkap', 'panggilan', 'grade', 'tenant_id']),
+            'tenants' => $tenants,
+            'students' => $students
         ]);
     }
 
@@ -36,11 +49,12 @@ class StudentController extends Controller
     {
         $student = new Student();
         $request->validate([
-            'nama_lengkap' => 'required|string|max:50|unique:students,nama_lengkap',
+            'nama_lengkap' => 'required|string|max:50|unique:students,nama_lengkap,'.!$student->tenant_id,
             'panggilan' => 'required|string|max:25',
             'grade' => 'required|string|max:50',
             'tenant_id' => 'required|numeric|exists:tenants,id',
         ]);
+        $validated['tenant_id'] = Auth::user()->tenant_id;
         $student->nama_lengkap = $request->nama_lengkap;
         $student->panggilan = $request->panggilan;
         $student->grade = $request->grade;
@@ -50,7 +64,7 @@ class StudentController extends Controller
         //     return back()->withErrors(['Terjadi kesalahan saat input data'])->withInput();
         // }
 
-        return redirect()->route('student.index')->with('sukses', 'Student added successfully');
+        return redirect()->route('student.index')->with('success', 'Student added successfully');
     }
 
     /**
@@ -75,12 +89,13 @@ class StudentController extends Controller
     public function update(Request $request, string $id)
     {
         $student = Student::findOrFail($id);
-        $request->validate([
+        $validated = $request->validate([
             'nama_lengkap' => 'required|string|max:50|unique:students,nama_lengkap,'.$id,
             'panggilan' => 'required|string|max:25',
             'grade' => 'required|string|max:50',
             'tenant_id' => 'required|numeric|exists:tenants,id',
         ]);
+        $validated['tenant_id'] = Auth::user()->tenant_id;
         $student->nama_lengkap = $request->nama_lengkap;
         $student->panggilan = $request->panggilan;
         $student->grade = $request->grade;
